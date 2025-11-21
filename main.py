@@ -84,11 +84,15 @@ else:
         else:
             with st.spinner('Menganalisis...'):
                 try:
+                    # Tools
                     stopword_remover = tools['stopword']
                     stemmer = tools['stemmer']
+
+                    # Preprocess
                     processed = preprocess_text(input_text, stopword_remover, stemmer)
                     vec = vectorizer.transform([processed])
 
+                    # Prediksi
                     pred_bnb = model_bnb.predict(vec)[0]
                     pred_svm = model_svm.predict(vec)[0]
                     pred_ensemble = model_ensemble.predict(vec)[0]
@@ -97,6 +101,7 @@ else:
                     prob_svm = model_svm.predict_proba(vec)[0]
                     prob_ensemble = model_ensemble.predict_proba(vec)[0]
 
+                    # ======== Hasil Ensemble ========
                     st.subheader("🎯 Hasil Analisis (Ensemble)")
 
                     max_prob = max(prob_ensemble) * 100
@@ -112,5 +117,36 @@ else:
                     # Probabilitas
                     st.write("*📊 Probabilitas:*")
                     col1, col2 = st.columns(2)
+
                     with col1:
                         st.metric("Negatif", f"{prob_ensemble[0]*100:.1f}%")
+
+                    with col2:
+                        st.metric("Positif", f"{prob_ensemble[1]*100:.1f}%")
+
+                    # ======== Bandingkan Model ========
+                    if show_comparison:
+                        st.subheader("📌 Perbandingan Model")
+
+                        comp1, comp2, comp3 = st.columns(3)
+                        with comp1:
+                            st.metric("BernoulliNB",
+                                      pred_bnb.upper(),
+                                      f"{max(prob_bnb)*100:.1f}%")
+                        with comp2:
+                            st.metric("Linear SVM",
+                                      pred_svm.upper(),
+                                      f"{max(prob_svm)*100:.1f}%")
+                        with comp3:
+                            st.metric("Ensemble",
+                                      pred_ensemble.upper(),
+                                      f"{max(prob_ensemble)*100:.1f}%")
+
+                    # ======== Detail Preprocessing ========
+                    if show_details:
+                        st.subheader("🔎 Detail Preprocessing")
+                        st.write(f"**Teks Asli:** {input_text}")
+                        st.write(f"**Setelah Cleaning:** {processed}")
+
+                except Exception as e:
+                    st.error(f"❌ Terjadi kesalahan: {e}")
